@@ -1,0 +1,17 @@
+# Virtual environments
+.venv/
+
+# Python bytecode and tool caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Packaging output
+*.egg-info/
+build/
+dist/
+
+# Editor settings can contain local paths; decide later whether to share any
+.vscode/
