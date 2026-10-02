@@ -1,0 +1,1 @@
+"""ProofSentinel: offline-first deterministic security testing and evidence harness."""
