@@ -1,11 +1,12 @@
 # PROJECT_STATE
 
 ## Current stage
-Stage 1 complete. Next: Stage 2.
+Stage 2 complete. Next: Stage 3.
 
 ## Stage history
 - Stage 0 accepted: spec v1.2 frozen and TriageAI tag verified (project commit e925e45)
 - Stage 1 accepted: repository, dev tooling, documentation skeleton, MIT license and CI. All four CI jobs were green at commit 9669901
+- Stage 2 accepted: testable CLI skeleton at commit 71854d7. All four CI jobs were green on that commit
 
 ## Repository
 - https://github.com/Jatin-Gupta-spec/proofsentinel (branch main)
@@ -28,6 +29,15 @@ Stage 1 complete. Next: Stage 2.
 - Permissions: contents: read. Checkout uses persist-credentials: false
 - Actions pinned by major version tag: actions/checkout@v6, actions/setup-python@v6
 
+## CLI (Stage 2)
+- Entry points: python -m proofsentinel (src/proofsentinel/__main__.py) and cli.main(argv) -> int in src/proofsentinel/cli.py
+- Commands that parse: validate <manifest>, run <manifest> --output <dir>, verify-evidence <dir>. Parsing opens no files
+- All three commands are not implemented yet and return exit code 2 (fail closed), never 0
+- Exit codes are in the ExitCode IntEnum: OK 0, CHECKS_FAILED 1, ERROR 2, USAGE 3. Usage errors return 3 with no traceback (argparse's default of 2 is overridden). --help returns 0
+- Text echoed back from the command line has non-printable characters (escape characters, newlines) shown as visible escapes
+- 22 tests pass (smoke test plus CLI tests). Tests set NO_COLOR and PYTHON_COLORS=0 so argparse output stays plain on newer Pythons
+- Test lesson: changing the unimplemented-command return code to 0 passed Ruff and mypy but failed 3 behavior tests
+
 ## Frozen inputs
 - Spec: spec\ProofSentinel_Final_Project_Specification_Audited_v1.2.md
 - Spec size: 41283 bytes
@@ -46,7 +56,7 @@ Stage 1 complete. Next: Stage 2.
 - Local Python (3.14) is newer than the CI versions (3.11 and 3.13). 3.14 is not in the CI matrix.
 - GitHub Actions are pinned by major version tag, not commit ID. Pinning by commit ID is a deferred hardening step. actions/setup-python v7 appears to exist and has not been reviewed.
 - Working-tree files use CRLF line endings (VS Code on Windows). Decide a line-ending policy before Stage 13 hashes repository files.
-- CI currently runs a single smoke test. Green CI shows the tooling works, not that ProofSentinel works.
+- CI runs 22 tests (a smoke test and the CLI tests). Green CI shows the CLI contract holds and the tooling works, not that ProofSentinel can validate, run or verify anything yet.
 
 ## Decisions
 - v0.1 scope is frozen. Any change needs an entry here first.
@@ -55,4 +65,4 @@ Stage 1 complete. Next: Stage 2.
 - Time-box / stop rule: not set yet (owner to decide).
 
 ## Next
-Stage 2: create the package entry point and a testable cli.main(argv) -> int. Usage errors return code 3 without a traceback; --help returns 0.
+Stage 3: define enums and dataclasses for the manifest, target, limits, checks, invocations, assertions, run results and evidence index. Data definitions only; nothing executes.
