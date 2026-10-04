@@ -1,12 +1,13 @@
 # PROJECT_STATE
 
 ## Current stage
-Stage 2 complete. Next: Stage 3.
+Stage 3 complete. Next: Stage 4.
 
 ## Stage history
 - Stage 0 accepted: spec v1.2 frozen and TriageAI tag verified (project commit e925e45)
 - Stage 1 accepted: repository, dev tooling, documentation skeleton, MIT license and CI. All four CI jobs were green at commit 9669901
 - Stage 2 accepted: testable CLI skeleton at commit 71854d7. All four CI jobs were green on that commit
+- Stage 3 accepted: immutable data models at commit 4223dc7. All four CI jobs were green on that commit
 
 ## Repository
 - https://github.com/Jatin-Gupta-spec/proofsentinel (branch main)
@@ -19,7 +20,7 @@ Stage 2 complete. Next: Stage 3.
 - VS Code 1.140.0 (x64)
 - Windows PowerShell 5.1.26100.9549
 - Project root contains a space: D:\cyber projects\ (quote paths in PowerShell)
-- Virtual environment: .venv in the repo root. VS Code activates it in the integrated terminal; commands still use the explicit .\.venv\Scripts\python.exe path
+- Virtual environment: .venv in the repo root. A terminal can activate it with a process-scope policy only (Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned); never use a wider scope. Project commands use the explicit .\.venv\Scripts\python.exe path, so activation is optional
 - Dev tools (pytest, Ruff, mypy strict, pip-audit) installed in .venv with pip install -e ".[dev]". Runtime dependencies: none
 
 ## CI
@@ -35,8 +36,18 @@ Stage 2 complete. Next: Stage 3.
 - All three commands are not implemented yet and return exit code 2 (fail closed), never 0
 - Exit codes are in the ExitCode IntEnum: OK 0, CHECKS_FAILED 1, ERROR 2, USAGE 3. Usage errors return 3 with no traceback (argparse's default of 2 is overridden). --help returns 0
 - Text echoed back from the command line has non-printable characters (escape characters, newlines) shown as visible escapes
-- 22 tests pass (smoke test plus CLI tests). Tests set NO_COLOR and PYTHON_COLORS=0 so argparse output stays plain on newer Pythons
+- Tests set NO_COLOR and PYTHON_COLORS=0 so argparse output stays plain on newer Pythons
 - Test lesson: changing the unimplemented-command return code to 0 passed Ruff and mypy but failed 3 behavior tests
+
+## Data models (Stage 3)
+- Module: src/proofsentinel/models.py. Tests: tests/test_models.py. 47 tests pass in total
+- 14 dataclasses (Limits, TargetDescriptor, CanaryRegistration, Assertion, CheckDefinition, Manifest, InvocationResult, AssertionResult, CheckResult, Totals, CanonicalResults, RunMetadata, EvidenceIndexEntry, EvidenceIndex), all frozen, slotted and keyword-only. A generic test enforces this for every model class
+- StrEnums: CheckType (the 7 v0.1 check types), CheckStatus (PASS, FAIL, ERROR only; no SKIP), AssertionKind, GitObjectFormat, CompletionState
+- Hard ceilings from the contract are constants (200 checks, 100 invocations, 600 s per command, 1800 s overall, 1 MiB streams, argv limits, 100 MiB file hashing). Stage 4 enforces them
+- Defaults fail closed: expected_exit 0, require_clean_git True
+- CanaryRegistration.value is hidden from repr(), but dataclasses.asdict() still exposes it (shown in the Stage 3 exercise). Rule for Stage 9: the evidence writer must never receive a Manifest or CanaryRegistration. It accepts only result models and converts them with explicit, hand-written field lists, never asdict() or vars(). The whole-bundle canary scan (Stage 12) is a second layer, not the only one
+- Models validate nothing. Stage 4's validator is the only door manifest data may pass through
+- Test lesson: a first draft of the keyword-only test still passed with the protection removed. Breaking the code on purpose exposed it, and the test was rewritten
 
 ## Frozen inputs
 - Spec: spec\ProofSentinel_Final_Project_Specification_Audited_v1.2.md
@@ -56,7 +67,9 @@ Stage 2 complete. Next: Stage 3.
 - Local Python (3.14) is newer than the CI versions (3.11 and 3.13). 3.14 is not in the CI matrix.
 - GitHub Actions are pinned by major version tag, not commit ID. Pinning by commit ID is a deferred hardening step. actions/setup-python v7 appears to exist and has not been reviewed.
 - Working-tree files use CRLF line endings (VS Code on Windows). Decide a line-ending policy before Stage 13 hashes repository files.
-- CI runs 22 tests (a smoke test and the CLI tests). Green CI shows the CLI contract holds and the tooling works, not that ProofSentinel can validate, run or verify anything yet.
+- CheckDefinition has only the fields shared by all checks. Fields specific to the file, git, release_claim, canary and performance checks are added in the stages that implement them.
+- models.py has one suppression: "# noqa: S105" on CheckStatus.PASS. Ruff mistakes the status name for a password. It is a documented false positive, suppressed on that line only.
+- CI runs 47 tests. Green CI shows the CLI contract and the data definitions hold, not that ProofSentinel can validate, run or verify anything yet.
 
 ## Decisions
 - v0.1 scope is frozen. Any change needs an entry here first.
@@ -65,4 +78,4 @@ Stage 2 complete. Next: Stage 3.
 - Time-box / stop rule: not set yet (owner to decide).
 
 ## Next
-Stage 3: define enums and dataclasses for the manifest, target, limits, checks, invocations, assertions, run results and evidence index. Data definitions only; nothing executes.
+Stage 4: safe bounded strict-UTF-8 TOML reading and closed-schema validation. It enforces the hard ceilings in models.py and builds a Manifest only from validated data. Nothing is executed.
